@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloomed Just For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-color: #ffb7b2;
+        --container-bg: #ffdac1;
+        --text-color: #5a2d3c;
+        --accent-color: #ff6961;
+        --border-color: #5a2d3c;
+    }
+    body {
+        background-color: var(--bg-color);
+        font-family: 'Press Start 2P', cursive;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: var(--text-color);
+        image-rendering: pixelated;
+    }
+    #game-container {
+        background-color: var(--container-bg);
+        border: 4px solid var(--border-color);
+        box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+        width: 90%;
+        max-width: 600px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    h1 { font-size: 1.5rem; line-height: 1.5; margin-bottom: 2rem; }
+    h2 { font-size: 1rem; margin-bottom: 1.5rem; }
+    .scene { display: none; }
+    .scene.active { display: block; animation: fadeIn 0.5s; }
+    
+    .btn {
+        background-color: var(--accent-color);
+        border: 4px solid var(--border-color);
+        color: #fff;
+        padding: 15px 20px;
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 4px 4px 0px var(--border-color);
+        text-transform: uppercase;
+        margin-top: 20px;
+        transition: transform 0.1s;
+    }
+    .btn:active {
+        transform: translate(4px, 4px);
+        box-shadow: none;
+    }
+    
+    .options-grid {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .option-card {
+        border: 4px solid var(--border-color);
+        padding: 20px;
+        cursor: pointer;
+        background: #fff;
+        transition: transform 0.2s;
+    }
+    .option-card:hover {
+        transform: scale(1.1);
+        background-color: #fff0f5;
+    }
+    .emoji-art {
+        font-size: 4rem;
+        margin: 20px 0;
+        display: block;
+    }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .bounce { animation: bounce 2s infinite; }
+    @keyframes grow { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    .grow { animation: grow 1s forwards; }
+    @keyframes drop { 0% { transform: translateY(-50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes pack { 0% { transform: scale(1); } 50% { transform: scale(0.9); } 100% { transform: scale(1); } }
+    @keyframes sparkle-anim { 
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 
+        50% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
+        100% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 
+    }
+    
+    .flower-container {
+        position: relative;
+        display: inline-block;
+        margin: 20px auto;
+    }
+    .flower-container .emoji-art { margin: 0; line-height: 1; }
+    .sparkle {
+        position: absolute;
+        font-size: 1.5rem;
+        animation: sparkle-anim 1.5s infinite;
+        z-index: 10;
+    }
+    
+    #music-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    #music-btn {
+        font-size: 0.5rem;
+        padding: 4px 8px;
+        margin-top: 0;
+    }
+    
+    .final-composition {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 20px auto;
+    }
+    .final-composition span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    #final-flower { font-size: 5rem; z-index: 1; }
+    #final-decoration { font-size: 2.5rem; z-index: 2; margin-top: 20px; margin-left: 20px; }
+    
+    #water-progress-container {
+        width: 80%;
+        height: 24px;
+        border: 4px solid var(--border-color);
+        background-color: #fff;
+        margin: 20px auto;
+    }
+    #water-progress-bar {
+        height: 100%;
+        background-color: #55c2da;
+        width: 0%;
+        transition: width 0.2s;
+    }
+    
+    /* Envelope Styles */
+    .envelope-wrapper {
+        position: relative;
+        width: 200px;
+        height: 140px;
+        background-color: #ff6961;
+        margin: 40px auto;
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+    .envelope-wrapper:hover { transform: scale(1.05); }
+    
+    .envelope-flap {
+        position: absolute;
+        top: 0; left: 0;
+        width: 0; height: 0;
+        border-left: 100px solid transparent;
+        border-right: 100px solid transparent;
+        border-top: 70px solid #d64545;
+        transform-origin: top;
+        transition: transform 0.6s ease-in-out, z-index 0.6s;
+        z-index: 5;
+    }
+    .envelope-pocket {
+        position: absolute;
+        bottom: 0; left: 0;
+        width: 0; height: 0;
+        border-left: 100px solid transparent;
+        border-right: 100px solid transparent;
+        border-bottom: 70px solid #ff8585;
+        z-index: 4;
+    }
+    .letter-preview {
+        position: absolute;
+        top: 10px; left: 10px;
+        width: 180px; height: 120px;
+        background-color: #fff;
+        z-index: 2;
+        transition: transform 1s ease-in-out;
+    }
+    .envelope-wrapper.open .envelope-flap { transform: rotateX(180deg); z-index: 1; }
+    .envelope-wrapper.open .letter-preview { transform: translateY(-80px); z-index: 3; }
+    
+    .paper {
+        background: #fff;
+        padding: 20px;
+        border: 4px solid var(--border-color);
+        box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+    }
+    
+    .message-body {
+        font-size: 0.6rem;
+        line-height: 1.8;
+        margin: 20px 0;
+    }
+    
+    .signature {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        font-size: 0.8rem;
+    }
+    
+    #flash-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: white;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9999;
+    }
+    @keyframes flash-anim { 0% { opacity: 1; } 100% { opacity: 0; } }
+    
+    /* Title Screen Enhancements */
+    .title-text {
+        background: linear-gradient(45deg, #ff6961, #d64545, #5a2d3c);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: gradient-anim 3s ease infinite;
+        text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1;
+    }
+    @keyframes gradient-anim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .floating-bg {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .floater {
+        position: absolute;
+        bottom: -50px;
+        font-size: 2rem;
+        opacity: 0.6;
+        animation: float-up 6s linear infinite;
+    }
+    @keyframes float-up { 0% { transform: translateY(0) rotate(0deg); opacity: 0.6; } 100% { transform: translateY(-400px) rotate(360deg); opacity: 0; } }
+    .btn-pulse { animation: pulse-anim 1.5s infinite; }
+    @keyframes pulse-anim { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="music-controls">
+        <button id="music-btn" class="btn" onclick="toggleMusic()">Music: OFF 🔇</button>
+    </div>
+    
+    <!-- Replace YouTube player with local Audio file -->
+    <audio id="bg-music" loop>
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+    <div id="flash-overlay"></div>
+
+    <!-- Scene 1: Title -->
+    <div id="scene-title" class="scene active">
+        <div class="floating-bg">
+            <span class="floater" style="left: 10%; animation-delay: 0s;">🌸</span>
+            <span class="floater" style="left: 80%; animation-delay: 2s;">💖</span>
+            <span class="floater" style="left: 20%; animation-delay: 4s;">✨</span>
+            <span class="floater" style="left: 70%; animation-delay: 1s;">🌹</span>
+        </div>
+        <h1 class="title-text">Bloomed just for you</h1>
+        <div class="emoji-art bounce" style="position: relative; z-index: 1;">💌</div>
+        <button class="btn btn-pulse" onclick="game.start()" style="position: relative; z-index: 1;">Start Game</button>
+    </div>
+
+    <!-- Scene 2: Choose Flower -->
+    <div id="scene-choose" class="scene">
+        <h2>Choose desired flower</h2>
+        <div class="options-grid">
+            <div class="option-card" onclick="game.chooseFlower('🌹')">
+                <div class="emoji-art">🌹</div>
+                <div>Rose</div>
+            </div>
+            <div class="option-card" onclick="game.chooseFlower('🌻')">
+                <div class="emoji-art">🌻</div>
+                <div>Sunflower</div>
+            </div>
+            <div class="option-card" onclick="game.chooseFlower('🌷')">
+                <div class="emoji-art">🌷</div>
+                <div>Tulip</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scene 3: Plant -->
+    <div id="scene-plant" class="scene">
+        <h2>Plant them</h2>
+        <div id="plant-emoji" class="emoji-art">🕳️</div>
+        <button class="btn" onclick="game.plant()">Plant Seed</button>
+    </div>
+
+    <!-- Scene 4: Water -->
+    <div id="scene-water" class="scene">
+        <h2>Water them</h2>
+        <div id="water-plant" class="emoji-art" style="transition: transform 0.2s">🌱</div>
+        <div id="water-progress-container">
+            <div id="water-progress-bar"></div>
+        </div>
+        <button class="btn" onclick="game.water()">Water 💧</button>
+    </div>
+
+    <!-- Scene 5: Pick -->
+    <div id="scene-pick" class="scene">
+        <h2>It grew!</h2>
+        <div id="grown-flower-container" class="flower-container">
+            <div id="grown-flower" class="emoji-art grow"></div>
+        </div>
+        <button class="btn" onclick="game.pick()">Pick Flower ✋</button>
+    </div>
+
+    <!-- Scene 6: Design -->
+    <div id="scene-design" class="scene">
+        <h2>Design them</h2>
+        <div class="options-grid">
+            <div class="option-card" onclick="game.design('🎀')">
+                <div class="emoji-art">🎀</div>
+                <div>Ribbon</div>
+            </div>
+            <div class="option-card" onclick="game.design('✨')">
+                <div class="emoji-art">✨</div>
+                <div>Sparkles</div>
+            </div>
+            <div class="option-card" onclick="game.design('🧸')">
+                <div class="emoji-art">🧸</div>
+                <div>Plushie</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scene 7: Envelope -->
+    <div id="scene-envelope" class="scene">
+        <h2>A letter for you...</h2>
+        <div class="envelope-wrapper" onclick="game.openEnvelope()">
+            <div class="envelope-flap"></div>
+            <div class="letter-preview"></div>
+            <div class="envelope-pocket"></div>
+        </div>
+        <p>(Click to open)</p>
+    </div>
+
+    <!-- Scene 8: Final Letter -->
+    <div id="scene-final" class="scene">
+        <div class="paper">
+            <h1>Happy Valentines Day Ebee</h1>
+            <div class="final-composition bounce">
+                <span id="final-flower"></span>
+                <span id="final-decoration"></span>
+            </div>
+            <p class="message-body">
+                Just wanna say thank you for always being kind and present. Like, you don't even try but you make my days lighter since when Im about to give up sa ACADS ko. Im SUPER grateful I get to talk to you and laugh with you. Na parang automatic comfort ka for me SO WEIRD. You're ONE OF MY FAVORITE PEOPLE!!!  Thank you for existing. INGAT IKAW LAGEE TAKE CARE HAPPY HEARTS DAY!!!
+            </p>
+            <p>Made with ❤️</p>
+            <div class="signature">
+                <p>To: Ebee</p>
+                <p>From: Drei</p>
+            </div>
+            <button class="btn" onclick="game.saveMemory()">📸 Save Memory</button>
+            <button class="btn" onclick="location.reload()">Replay</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const game = {
+        state: { flower: '', decoration: '', waterCount: 0 },
+        start: function() { 
+            this.transition('scene-title', 'scene-choose');
+            
+            const audio = document.getElementById('bg-music');
+            if (audio) {
+                audio.play().catch(error => console.log("Playback failed:", error));
+                document.getElementById('music-btn').textContent = "Music: ON 🎵";
+            }
+        },
+        chooseFlower: function(f) { this.state.flower = f; this.transition('scene-choose', 'scene-plant'); },
+        plant: function() { 
+            const btn = document.querySelector('#scene-plant button'); btn.textContent = "Planting...";
+            const emoji = document.getElementById('plant-emoji');
+            
+            // Step 1: Drop Seed
+            emoji.textContent = '🌰';
+            emoji.style.animation = 'drop 0.8s forwards';
+            
+            setTimeout(() => { 
+                // Step 2: Cover with Dirt
+                btn.textContent = "Covering...";
+                emoji.textContent = '🟤';
+                emoji.style.animation = 'pack 0.5s infinite';
+                
+                setTimeout(() => {
+                    this.state.waterCount = 0; // Reset water count
+                    document.getElementById('water-progress-bar').style.width = '0%';
+                    document.getElementById('water-plant').style.transform = 'scale(1)';
+                    this.transition('scene-plant', 'scene-water'); 
+                    
+                    // Reset plant scene for replay
+                    setTimeout(() => {
+                        btn.textContent = "Plant Seed";
+                        emoji.textContent = '🕳️';
+                        emoji.style.animation = '';
+                    }, 1000);
+                }, 1500);
+            }, 1000);
+        },
+        water: function() {
+            this.state.waterCount++;
+            const maxClicks = 5;
+            const progress = (this.state.waterCount / maxClicks) * 100;
+            
+            document.getElementById('water-progress-bar').style.width = progress + '%';
+            document.getElementById('water-plant').style.transform = `scale(${1 + (this.state.waterCount * 0.25)})`;
+            
+            if (this.state.waterCount >= maxClicks) {
+                setTimeout(() => {
+                    document.getElementById('grown-flower').textContent = this.state.flower;
+                    this.transition('scene-water', 'scene-pick');
+                    this.createSparkles();
+                }, 500);
+            }
+        },
+        pick: function() { this.transition('scene-pick', 'scene-design'); },
+        design: function(d) { 
+            this.state.decoration = d;
+            // Pre-fill final scene
+            document.getElementById('final-flower').textContent = this.state.flower;
+            document.getElementById('final-decoration').textContent = this.state.decoration;
+            this.transition('scene-design', 'scene-envelope'); 
+        },
+        openEnvelope: function() {
+            document.querySelector('.envelope-wrapper').classList.add('open');
+            setTimeout(() => { this.transition('scene-envelope', 'scene-final'); }, 1500);
+        },
+        saveMemory: function() {
+            const flash = document.getElementById('flash-overlay');
+            flash.style.animation = 'flash-anim 0.5s ease-out';
+            setTimeout(() => { flash.style.animation = 'none'; }, 500);
+            
+            const element = document.querySelector('.paper');
+            html2canvas(element).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Made by Drei.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        },
+        createSparkles: function() {
+            const container = document.getElementById('grown-flower-container');
+            // Remove old sparkles if any
+            container.querySelectorAll('.sparkle').forEach(e => e.remove());
+            
+            for(let i = 0; i < 6; i++) {
+                const s = document.createElement('div');
+                s.className = 'sparkle';
+                s.textContent = '✨';
+                // Random position around the flower
+                s.style.left = (Math.random() * 120 - 10) + '%'; 
+                s.style.top = (Math.random() * 120 - 10) + '%';
+                s.style.animationDelay = (Math.random() * 1) + 's';
+                container.appendChild(s);
+            }
+        },
+        transition: function(from, to) {
+            document.getElementById(from).classList.remove('active');
+            document.getElementById(to).classList.add('active');
+        }
+    };
+</script>
+<script>
+    function toggleMusic() {
+        const audio = document.getElementById('bg-music');
+        const btn = document.getElementById('music-btn');
+        
+        if (audio.paused) {
+            audio.play();
+            btn.textContent = "Music: ON 🎵";
+        } else {
+            audio.pause();
+            btn.textContent = "Music: OFF 🔇";
+        }
+    }
+</script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</body>
+</html>
